@@ -18,7 +18,7 @@ Add this package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  web3dart_get_fee_data: ^1.0.1
+  web3dart_get_fee_data: ^1.0.2
 ```
 
 Then run:

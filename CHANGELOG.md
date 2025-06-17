@@ -10,3 +10,7 @@
 ## [1.0.1] - 2025-06-17
 
 - Update README.md
+
+## [1.0.2] - 2025-06-17
+
+- Refactor for improved pub.dev scores
