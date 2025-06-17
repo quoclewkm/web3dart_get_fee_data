@@ -23,7 +23,12 @@ void main() {
       expect(feeData, isNotNull);
 
       // Should have either gasPrice (legacy) or EIP-1559 fee data
-      expect(feeData.gasPrice != null || (feeData.maxFeePerGas != null && feeData.maxPriorityFeePerGas != null), isTrue);
+      expect(
+        feeData.gasPrice != null ||
+            (feeData.maxFeePerGas != null &&
+                feeData.maxPriorityFeePerGas != null),
+        isTrue,
+      );
 
       // Verify the values are positive when present
       if (feeData.gasPrice != null) {
@@ -37,15 +42,22 @@ void main() {
       }
 
       // Verify maxFeePerGas is greater than or equal to maxPriorityFeePerGas when both are present
-      if (feeData.maxFeePerGas != null && feeData.maxPriorityFeePerGas != null) {
-        expect(feeData.maxFeePerGas!, greaterThanOrEqualTo(feeData.maxPriorityFeePerGas!));
+      if (feeData.maxFeePerGas != null &&
+          feeData.maxPriorityFeePerGas != null) {
+        expect(
+          feeData.maxFeePerGas!,
+          greaterThanOrEqualTo(feeData.maxPriorityFeePerGas!),
+        );
       }
     });
 
     test('getFeeData handles network errors gracefully', () async {
       // Create client with invalid URL
       final invalidHttpClient = Client();
-      final invalidClient = Web3Client('https://invalid-url-that-does-not-exist.com', invalidHttpClient);
+      final invalidClient = Web3Client(
+        'https://invalid-url-that-does-not-exist.com',
+        invalidHttpClient,
+      );
 
       try {
         await getFeeData(invalidClient);
@@ -58,16 +70,22 @@ void main() {
     });
 
     test('FeeData toString returns correct format', () {
-      final feeData = FeeData(BigInt.from(1000000000), BigInt.from(2000000000), BigInt.from(1500000000));
+      final feeData = FeeData(
+        BigInt.from(1000000000),
+        BigInt.from(2000000000),
+        BigInt.from(1500000000),
+      );
 
-      final expectedString = 'FeeData(gasPrice: 1000000000, maxFeePerGas: 2000000000, maxPriorityFeePerGas: 1500000000)';
+      final expectedString =
+          'FeeData(gasPrice: 1000000000, maxFeePerGas: 2000000000, maxPriorityFeePerGas: 1500000000)';
       expect(feeData.toString(), equals(expectedString));
     });
 
     test('FeeData with null values', () {
       final feeData = FeeData(null, null, null);
 
-      final expectedString = 'FeeData(gasPrice: null, maxFeePerGas: null, maxPriorityFeePerGas: null)';
+      final expectedString =
+          'FeeData(gasPrice: null, maxFeePerGas: null, maxPriorityFeePerGas: null)';
       expect(feeData.toString(), equals(expectedString));
     });
   });

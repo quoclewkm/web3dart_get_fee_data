@@ -47,13 +47,20 @@ Future<void> demonstrateNetwork(String networkName, String rpcUrl) async {
       print('   🎯 EIP-1559 Support: YES');
 
       final maxFeeGwei = feeData.maxFeePerGas! ~/ BigInt.from(1000000000);
-      final maxPriorityGwei = feeData.maxPriorityFeePerGas! ~/ BigInt.from(1000000000);
+      final maxPriorityGwei =
+          feeData.maxPriorityFeePerGas! ~/ BigInt.from(1000000000);
 
-      print('   🔥 Max Fee Per Gas: ${feeData.maxFeePerGas} wei ($maxFeeGwei gwei)');
-      print('   ⚡ Max Priority Fee: ${feeData.maxPriorityFeePerGas} wei ($maxPriorityGwei gwei)');
+      print(
+        '   🔥 Max Fee Per Gas: ${feeData.maxFeePerGas} wei ($maxFeeGwei gwei)',
+      );
+      print(
+        '   ⚡ Max Priority Fee: ${feeData.maxPriorityFeePerGas} wei ($maxPriorityGwei gwei)',
+      );
 
       // Show which transaction type to use
-      print('   💡 Recommendation: Use EIP-1559 transactions for better fee prediction');
+      print(
+        '   💡 Recommendation: Use EIP-1559 transactions for better fee prediction',
+      );
     } else {
       print('   📜 EIP-1559 Support: NO (Legacy network)');
       print('   💡 Recommendation: Use legacy transactions with gasPrice');

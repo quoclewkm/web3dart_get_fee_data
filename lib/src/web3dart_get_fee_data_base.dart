@@ -38,14 +38,18 @@ import 'package:web3dart_get_fee_data/src/fee_data_model.dart';
 Future<FeeData> getFeeData(Web3Client client) async {
   final latestBlock = await client.getBlockInformation();
   final gasPrice = await client.getGasPrice();
-  final priorityFeeResponse = await client.makeRPCCall('eth_maxPriorityFeePerGas');
+  final priorityFeeResponse = await client.makeRPCCall(
+    'eth_maxPriorityFeePerGas',
+  );
 
   BigInt? maxPriorityFeePerGas;
   BigInt? maxFeePerGas;
 
   final baseFeePerGas = latestBlock.baseFeePerGas;
   if (baseFeePerGas != null && priorityFeeResponse is String) {
-    maxPriorityFeePerGas = BigInt.tryParse(priorityFeeResponse.substring(2), radix: 16) ?? BigInt.from(1_000_000_000);
+    maxPriorityFeePerGas =
+        BigInt.tryParse(priorityFeeResponse.substring(2), radix: 16) ??
+        BigInt.from(1_000_000_000);
     maxFeePerGas = (baseFeePerGas.getInWei * BigInt.two) + maxPriorityFeePerGas;
   }
 

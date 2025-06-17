@@ -36,5 +36,6 @@ class FeeData {
   FeeData(this.gasPrice, this.maxFeePerGas, this.maxPriorityFeePerGas);
 
   @override
-  String toString() => 'FeeData(gasPrice: $gasPrice, maxFeePerGas: $maxFeePerGas, maxPriorityFeePerGas: $maxPriorityFeePerGas)';
+  String toString() =>
+      'FeeData(gasPrice: $gasPrice, maxFeePerGas: $maxFeePerGas, maxPriorityFeePerGas: $maxPriorityFeePerGas)';
 }

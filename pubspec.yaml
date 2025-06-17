@@ -3,7 +3,6 @@ description: A Dart package for getting Ethereum fee data, including support for
 version: 1.0.1
 homepage: https://github.com/quoclewkm/web3dart_get_fee_data
 repository: https://github.com/quoclewkm/web3dart_get_fee_data
-documentation: https://pub.dev/documentation/web3dart_get_fee_data/latest/
 
 environment:
   sdk: ^3.8.1
