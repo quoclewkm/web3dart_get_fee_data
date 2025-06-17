@@ -33,7 +33,7 @@ Add this package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  web3dart_get_fee_data: ^0.0.1
+  web3dart_get_fee_data: ^1.0.0
 ```
 
 Then run:
@@ -194,4 +194,3 @@ See [CHANGELOG.md](CHANGELOG.md) for a detailed list of changes and version hist
 
 - 📖 [Documentation](https://pub.dev/documentation/web3dart_get_fee_data/latest/)
 - 🐛 [Issue Tracker](https://github.com/quoclewkm/web3dart_get_fee_data/issues)
-- 💬 [Discussions](https://github.com/quoclewkm/web3dart_get_fee_data/discussions)
