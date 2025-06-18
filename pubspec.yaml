@@ -1,6 +1,6 @@
 name: web3dart_get_fee_data
 description: A Dart package for getting Ethereum fee data, including support for EIP-1559 transactions. Provides an easy-to-use API similar to ethers.js getFeeData().
-version: 1.0.2
+version: 1.1.0
 homepage: https://github.com/quoclewkm/web3dart_get_fee_data
 repository: https://github.com/quoclewkm/web3dart_get_fee_data
 
