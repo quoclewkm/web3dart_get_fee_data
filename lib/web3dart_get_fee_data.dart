@@ -8,6 +8,7 @@
 /// - **EIP-1559 Support**: Get `maxFeePerGas` and `maxPriorityFeePerGas` for modern transactions
 /// - **Legacy Compatibility**: Fallback to traditional `gasPrice` for older networks
 /// - **Automatic Detection**: Seamlessly handles both EIP-1559 and legacy networks
+/// - **Custom Error Handling**: Optional `onError` callback for custom fallback strategies
 /// - **ethers.js Compatible**: API designed to match ethers.js `getFeeData()` behavior
 ///
 /// ## Quick Start
@@ -25,6 +26,20 @@
 ///   print('Max Fee Per Gas: ${feeData.maxFeePerGas} wei');
 ///   print('Max Priority Fee: ${feeData.maxPriorityFeePerGas} wei');
 /// }
+/// ```
+///
+/// ## Custom Error Handling
+///
+/// ```dart
+/// final feeData = await getFeeData(
+///   client,
+///   onError: (context) {
+///     print('Failed ${context.operation}: ${context.error}');
+///     print('Stack trace: ${context.stackTrace}');
+///     // Return custom fallback or null to use default
+///     return BigInt.from(2e9); // 2 gwei
+///   }
+/// );
 /// ```
 library;
 

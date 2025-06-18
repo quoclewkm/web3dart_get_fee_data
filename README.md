@@ -7,10 +7,9 @@ A Dart package for retrieving Ethereum fee data with full EIP-1559 support. Prov
 
 ## Features
 
-- ✅ **EIP-1559 Support**: Get `maxFeePerGas` and `maxPriorityFeePerGas`
-- ✅ **Legacy Compatibility**: Automatic fallback to `gasPrice`
-- ✅ **Network Detection**: Handles both EIP-1559 and legacy networks
-- ✅ **Type Safe**: Full Dart type safety with nullable types
+- ✅ **EIP-1559 Support**: Get `maxFeePerGas` and `maxPriorityFeePerGas` for modern transactions
+- ✅ **Legacy Compatibility**: Automatic fallback to `gasPrice` for older networks
+- ✅ **Custom Error Handling**: Optional `onError` callback for custom fallback strategies
 
 ## Installation
 
@@ -48,28 +47,76 @@ void main() async {
     }
   } finally {
     ethClient.dispose();
+    httpClient.close();
   }
 }
 ```
 
-## API
+## Advanced Usage
 
-### `getFeeData(Web3Client client)`
+### Custom Error Handling
 
-Returns `Future<FeeData>` with current network fees.
+Use the `onError` callback for custom fallback strategies:
+
+```dart
+final feeData = await getFeeData(
+  client,
+  onError: (context) {
+    print('Error in ${context.operation}: ${context.error}');
+    print('Stack trace: ${context.stackTrace}');
+    
+    // Custom fallback strategies
+    if (context.operation == 'eth_maxPriorityFeePerGas') {
+      // Use zero priority fee for networks like Arbitrum
+      return BigInt.zero;
+    }
+    
+    // Use default fallback
+    return context.fallbackValue;
+  }
+);
+```
+
+## API Reference
+
+### `getFeeData(Web3Client client, {onError})`
+
+**Parameters:**
+
+- `client`: A connected `Web3Client` instance
+- `onError`: Optional callback for custom error handling
+
+**Returns:** `Future<FeeData>` with current network fees
+
+**Example:**
+
+```dart
+Future<FeeData> getFeeData(
+  Web3Client client, {
+  BigInt? Function(ErrorContext context)? onError,
+})
+```
 
 ### `FeeData`
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `gasPrice` | `BigInt?` | Legacy gas price in wei |
-| `maxFeePerGas` | `BigInt?` | EIP-1559 max fee per gas |
-| `maxPriorityFeePerGas` | `BigInt?` | EIP-1559 priority fee |
+| `gasPrice` | `BigInt?` | Legacy gas price in wei (always provided) |
+| `maxFeePerGas` | `BigInt?` | EIP-1559 max fee per gas (when supported) |
+| `maxPriorityFeePerGas` | `BigInt?` | EIP-1559 priority fee (when supported) |
 
-## Network Support
+### `ErrorContext`
 
-**EIP-1559 Networks:** Returns all three properties  
-**Legacy Networks:** Returns only `gasPrice`
+Provides comprehensive error information to `onError` callbacks:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `operation` | `String` | The operation that failed (e.g., 'eth_maxPriorityFeePerGas') |
+| `error` | `dynamic` | The original error that occurred |
+| `stackTrace` | `StackTrace` | Stack trace when the error occurred |
+| `fallbackValue` | `BigInt?` | Default fallback value that would be used |
+| `gasPrice` | `BigInt` | Current gas price in wei |
+| `baseFeePerGas` | `BigInt?` | Current base fee per gas in wei (EIP-1559 networks) |
 
 ## License
 
