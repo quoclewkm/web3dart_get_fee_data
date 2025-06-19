@@ -21,6 +21,10 @@ void main() async {
     print(''); // Add spacing between networks
   }
 
+  // Demonstrate suggested gas fees (EIP-1559)
+  print('🚀 Suggested Gas Fees Examples:\n');
+  await demonstrateSuggestedGasFees();
+
   // Demonstrate custom error handling
   print('🎯 Custom Error Handling Examples:\n');
   await demonstrateCustomErrorHandling();
@@ -103,6 +107,73 @@ void demonstrateTransactionUsage() {
     );
   }
   ''');
+}
+
+/// Demonstrates the suggested gas fees feature for EIP-1559 networks
+Future<void> demonstrateSuggestedGasFees() async {
+  print('📊 Testing EIP-1559 Suggested Gas Fees...');
+
+  final httpClient = Client();
+  final ethClient = Web3Client('https://eth.llamarpc.com', httpClient);
+
+  try {
+    // Get suggested gas fees with default settings
+    final suggestedFees = await getSuggestedGasFees(ethClient);
+
+    print('✅ Successfully retrieved suggested gas fees:');
+
+    // Convert to gwei for readability
+    final baseFeeGwei = suggestedFees.baseFeePerGas ~/ BigInt.from(1e9);
+    print('   ⚡ Base Fee: ${suggestedFees.baseFeePerGas} wei ($baseFeeGwei gwei)');
+    print('');
+
+    // Display each tier
+    _displayFeeTier('🐌 SLOW', suggestedFees.slow, 'Conservative estimate');
+    _displayFeeTier('🚶 AVERAGE', suggestedFees.average, 'Standard estimate');
+    _displayFeeTier('🚀 FAST', suggestedFees.fast, 'Aggressive estimate');
+
+    // Show cost comparison for a standard transaction
+    final gasLimit = 21000; // Standard ETH transfer
+    print('   💰 Cost for 21,000 gas transaction:');
+
+    final slowCost = suggestedFees.slow.maxFeePerGas * BigInt.from(gasLimit);
+    final averageCost = suggestedFees.average.maxFeePerGas * BigInt.from(gasLimit);
+    final fastCost = suggestedFees.fast.maxFeePerGas * BigInt.from(gasLimit);
+
+    print('      Slow:    $slowCost wei');
+    print('      Average: $averageCost wei');
+    print('      Fast:    $fastCost wei');
+
+    // Example with custom parameters
+    print('\n📋 Custom Configuration Example:');
+    final customFees = await getSuggestedGasFees(
+      ethClient,
+      historicalBlocks: 10, // Analyze fewer blocks
+      onError: (context) {
+        print('   ⚠️ Error: ${context.error}');
+        return context.fallbackValue;
+      },
+    );
+
+    final customAvgGwei = customFees.average.maxPriorityFeePerGas ~/ BigInt.from(1e9);
+    print('   ✅ Custom (10 blocks): ${customFees.average.maxPriorityFeePerGas} wei ($customAvgGwei gwei priority)');
+  } catch (e) {
+    print('❌ Error getting suggested gas fees: $e');
+    if (e.toString().contains('EIP-1559 not supported')) {
+      print('   💡 This network may not support EIP-1559');
+    }
+  } finally {
+    ethClient.dispose();
+  }
+}
+
+void _displayFeeTier(String name, GasFeeEstimate estimate, String description) {
+  final priorityGwei = estimate.maxPriorityFeePerGas ~/ BigInt.from(1e9);
+  final maxFeeGwei = estimate.maxFeePerGas ~/ BigInt.from(1e9);
+
+  print('   $name ($description):');
+  print('      Priority Fee: ${estimate.maxPriorityFeePerGas} wei ($priorityGwei gwei)');
+  print('      Max Fee:      ${estimate.maxFeePerGas} wei ($maxFeeGwei gwei)');
 }
 
 /// Demonstrates custom error handling with onError callbacks

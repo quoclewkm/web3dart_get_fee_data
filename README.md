@@ -10,6 +10,9 @@ A Dart package for retrieving Ethereum fee data with full EIP-1559 support. Prov
 - ✅ **EIP-1559 Support**: Get `maxFeePerGas` and `maxPriorityFeePerGas` for modern transactions
 - ✅ **Legacy Compatibility**: Automatic fallback to `gasPrice` for older networks
 - ✅ **Custom Error Handling**: Optional `onError` callback for custom fallback strategies
+- 🚀 **Suggested Gas Fees**: Get slow, average, and fast fee estimates using EIP-1559 methodology
+- 📊 **Smart Fee Tiers**: Historical analysis with 1st, 50th, and 99th percentiles
+- 📈 **Real-time Data**: Uses `eth_feeHistory` for accurate fee predictions
 
 ## Installation
 
@@ -17,7 +20,7 @@ Add this package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  web3dart_get_fee_data: ^1.1.0
+  web3dart_get_fee_data: ^1.2.0
 ```
 
 Then run:
@@ -26,7 +29,9 @@ Then run:
 dart pub get
 ```
 
-## Usage
+## Quick Start
+
+### Basic Fee Data
 
 ```dart
 import 'package:web3dart/web3dart.dart';
@@ -38,6 +43,7 @@ void main() async {
   final ethClient = Web3Client('https://eth.llamarpc.com', httpClient);
 
   try {
+    // Get current fee data
     final feeData = await getFeeData(ethClient);
 
     if (feeData.maxFeePerGas != null) {
@@ -51,6 +57,72 @@ void main() async {
   }
 }
 ```
+
+### Suggested Gas Fees (EIP-1559)
+
+```dart
+void main() async {
+  final httpClient = Client();
+  final ethClient = Web3Client('https://eth.llamarpc.com', httpClient);
+
+  try {
+    // Get suggested fee tiers based on historical data
+    final suggestedFees = await getSuggestedGasFees(ethClient);
+
+    print('Base Fee: ${suggestedFees.baseFeePerGas} wei');
+    print('Slow: ${suggestedFees.slow.maxFeePerGas} wei');
+    print('Average: ${suggestedFees.average.maxFeePerGas} wei');
+    print('Fast: ${suggestedFees.fast.maxFeePerGas} wei');
+
+    // Use in a transaction
+    final transaction = Transaction.callContract(
+      contract: contract,
+      function: function,
+      parameters: [],
+      maxFeePerGas: EtherAmount.fromBigInt(
+        EtherUnit.wei, 
+        suggestedFees.average.maxFeePerGas,
+      ),
+      maxPriorityFeePerGas: EtherAmount.fromBigInt(
+        EtherUnit.wei,
+        suggestedFees.average.maxPriorityFeePerGas,
+      ),
+    );
+  } finally {
+    ethClient.dispose();
+    httpClient.close();
+  }
+}
+```
+
+## Suggested Gas Fees Methodology
+
+The `getSuggestedGasFees` function implements the EIP-1559 fee estimation methodology described in [Alchemy's documentation](https://www.alchemy.com/docs/how-to-build-a-gas-fee-estimator-using-eip-1559):
+
+### How It Works
+
+1. **Historical Analysis**: Analyzes recent blocks using `eth_feeHistory` RPC call
+2. **Percentile Calculation**: Uses 1st, 50th, and 99th percentiles of priority fees
+3. **Speed Tiers**: Provides three options:
+   - `slow`: Conservative (1st percentile) - cheaper but slower
+   - `average`: Standard (50th percentile) - balanced cost and speed
+   - `fast`: Aggressive (99th percentile) - more expensive but faster
+4. **Base Fee Addition**: Combines priority fees with current base fee
+
+### When to Use Each Tier
+
+- **🐌 Slow**: Non-urgent transactions, cost optimization
+- **🚶 Average**: Typical transactions, balanced approach
+- **🚀 Fast**: Time-sensitive transactions, faster confirmation
+
+### Fallback Strategy
+
+If the network doesn't support `eth_feeHistory` or errors occur, the function provides sensible defaults:
+
+- Base fee: 20 gwei
+- Slow priority: 1 gwei
+- Average priority: 1.5 gwei  
+- Fast priority: 2 gwei
 
 ## Advanced Usage
 
@@ -78,6 +150,45 @@ final feeData = await getFeeData(
 ```
 
 ## API Reference
+
+### `getSuggestedGasFees(Web3Client client, {historicalBlocks, onError})`
+
+**Parameters:**
+
+- `client`: A connected `Web3Client` instance
+- `historicalBlocks`: Number of historical blocks to analyze (default: 20)
+- `onError`: Optional callback for custom error handling
+
+**Returns:** `Future<SuggestedGasFees>` with three fee tiers
+
+**Example:**
+
+```dart
+final suggestedFees = await getSuggestedGasFees(
+  client,
+  historicalBlocks: 10, // Analyze fewer blocks for faster response
+  onError: (context) {
+    print('Error: ${context.error}');
+    return context.fallbackValue; // Use default fallback
+  },
+);
+```
+
+### `SuggestedGasFees`
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `slow` | `GasFeeEstimate` | Conservative estimate (1st percentile) |
+| `average` | `GasFeeEstimate` | Standard estimate (50th percentile) |
+| `fast` | `GasFeeEstimate` | Aggressive estimate (99th percentile) |
+| `baseFeePerGas` | `BigInt` | Current base fee from latest block |
+
+### `GasFeeEstimate`
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `maxPriorityFeePerGas` | `BigInt` | Priority fee (tip) for this estimate |
+| `maxFeePerGas` | `BigInt` | Total max fee (base + priority) |
 
 ### `getFeeData(Web3Client client, {onError})`
 
