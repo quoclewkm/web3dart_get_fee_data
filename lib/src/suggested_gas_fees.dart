@@ -568,7 +568,6 @@ BigInt _calculateAveragePriorityFee(List<HistoricalBlock> blocks, int percentile
     return BigInt.from(networkConfig.defaultAveragePriorityFeeWei);
   }
 
-  BigInt sum = BigInt.zero;
   int validBlocks = 0;
   List<BigInt> allFees = [];
 
@@ -580,10 +579,8 @@ BigInt _calculateAveragePriorityFee(List<HistoricalBlock> blocks, int percentile
       // if we get a zero fee, use the network's minimum
       if (!networkConfig.hasActivePriorityFees && priorityFee == BigInt.zero) {
         allFees.add(BigInt.from(networkConfig.minimumPriorityFeeWei));
-        sum += BigInt.from(networkConfig.minimumPriorityFeeWei);
       } else {
         allFees.add(priorityFee);
-        sum += priorityFee;
       }
       validBlocks++;
     }
