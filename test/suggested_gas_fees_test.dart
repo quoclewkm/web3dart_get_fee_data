@@ -32,10 +32,20 @@ void main() {
       expect(suggestedFees.slow.maxPriorityFeePerGas, lessThanOrEqualTo(suggestedFees.average.maxPriorityFeePerGas));
       expect(suggestedFees.average.maxPriorityFeePerGas, lessThanOrEqualTo(suggestedFees.fast.maxPriorityFeePerGas));
 
-      // Max fee per gas should include base fee
-      expect(suggestedFees.slow.maxFeePerGas, equals(suggestedFees.baseFeePerGas + suggestedFees.slow.maxPriorityFeePerGas));
-      expect(suggestedFees.average.maxFeePerGas, equals(suggestedFees.baseFeePerGas + suggestedFees.average.maxPriorityFeePerGas));
-      expect(suggestedFees.fast.maxFeePerGas, equals(suggestedFees.baseFeePerGas + suggestedFees.fast.maxPriorityFeePerGas));
+      // Max fee per gas should be at least base fee + priority fee (may include congestion multiplier)
+      expect(suggestedFees.slow.maxFeePerGas, greaterThanOrEqualTo(suggestedFees.baseFeePerGas + suggestedFees.slow.maxPriorityFeePerGas));
+      expect(suggestedFees.average.maxFeePerGas, greaterThanOrEqualTo(suggestedFees.baseFeePerGas + suggestedFees.average.maxPriorityFeePerGas));
+      expect(suggestedFees.fast.maxFeePerGas, greaterThanOrEqualTo(suggestedFees.baseFeePerGas + suggestedFees.fast.maxPriorityFeePerGas));
+
+      // But should not be unreasonably high (within 50% congestion multiplier for Ethereum)
+      expect(
+        suggestedFees.average.maxFeePerGas,
+        lessThanOrEqualTo((suggestedFees.baseFeePerGas + suggestedFees.average.maxPriorityFeePerGas) * BigInt.from(150) ~/ BigInt.from(100)),
+      );
+      expect(
+        suggestedFees.fast.maxFeePerGas,
+        lessThanOrEqualTo((suggestedFees.baseFeePerGas + suggestedFees.fast.maxPriorityFeePerGas) * BigInt.from(150) ~/ BigInt.from(100)),
+      );
     });
 
     test('getSuggestedGasFees with custom historical blocks', () async {

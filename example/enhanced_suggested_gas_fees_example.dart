@@ -2,172 +2,220 @@ import 'package:http/http.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:web3dart_get_fee_data/web3dart_get_fee_data.dart';
 
-/// Smart Network Categorization Demo
+/// Next-Generation Adaptive Gas Fee Estimation Demo
 ///
-/// This example demonstrates the intelligent network categorization system that
-/// automatically classifies blockchain networks into 4 simple types:
-/// - Ethereum L1: High congestion networks (Ethereum mainnet)
-/// - Layer 2: L2s with minimal priority fees (Arbitrum, Optimism, Base, etc.)
-/// - Sidechain: Fast networks with moderate fees (Polygon, BSC, Avalanche)
-/// - Unknown: Conservative defaults for unrecognized networks
+/// This example demonstrates the enhanced adaptive gas fee estimation system that
+/// intelligently optimizes for each network with real-time parameter tuning:
+/// - 🧠 Smart network categorization (4 intelligent types)
+/// - ⚡ Congestion-aware percentile adaptation
+/// - 🎯 Dynamic block count optimization
+/// - 📊 Real-time parameter tuning based on network conditions
+/// - 🔄 Weighted averaging with recent block preference
 Future<void> main() async {
-  print('🧠 Smart Network Categorization Demo\n');
-  print('Automatically classifying networks into intelligent categories...\n');
+  print('🧠 Next-Generation Adaptive Gas Fee Estimation Demo\n');
+  print('Real-time optimization for blockchain networks...\n');
 
-  // Test representative networks from each category
+  // Test networks with different characteristics
   final networks = [
     {'name': 'Ethereum Mainnet', 'url': 'https://eth.llamarpc.com', 'chainId': 1, 'type': 'Ethereum L1'},
     {'name': 'Arbitrum One', 'url': 'https://arb1.arbitrum.io/rpc', 'chainId': 42161, 'type': 'Layer 2'},
     {'name': 'Polygon Mainnet', 'url': 'https://1rpc.io/matic', 'chainId': 137, 'type': 'Sidechain'},
     {'name': 'Base Mainnet', 'url': 'https://mainnet.base.org', 'chainId': 8453, 'type': 'Layer 2'},
-    {'name': 'BNB Smart Chain', 'url': 'https://bsc-dataseed.binance.org', 'chainId': 56, 'type': 'Sidechain'},
+    {'name': 'Optimism Mainnet', 'url': 'https://mainnet.optimism.io', 'chainId': 10, 'type': 'Layer 2'},
+    {'name': 'Avalanche C-Chain', 'url': 'https://api.avax.network/ext/bc/C/rpc', 'chainId': 43114, 'type': 'Sidechain'},
   ];
 
   for (final network in networks) {
-    await demonstrateNetworkType(network['name']! as String, network['url']! as String, network['chainId']! as int, network['type']! as String);
+    await demonstrateAdaptiveOptimization(network['name']! as String, network['url']! as String, network['chainId']! as int, network['type']! as String);
     print(''); // Add spacing between networks
   }
 
-  // Demonstrate category-based optimization
-  print('🎯 Category-Based Optimization Impact:\n');
-  await demonstrateCategoryOptimization();
+  // Demonstrate congestion-aware optimization
+  print('⚡ Congestion-Aware Optimization Demo:\n');
+  await demonstrateCongestionAdaptation();
+
+  // Show improvements over static systems
+  print('\n🎯 Adaptive vs Static Configuration Comparison:\n');
+  await demonstrateAdaptiveVsStatic();
 }
 
-/// Demonstrates smart categorization for a specific network
-Future<void> demonstrateNetworkType(String networkName, String rpcUrl, int chainId, String expectedType) async {
-  print('📡 Testing $networkName (Expected: $expectedType)...');
-
+/// Demonstrates adaptive optimization for a specific network
+Future<void> demonstrateAdaptiveOptimization(String networkName, String rpcUrl, int chainId, String expectedType) async {
   final httpClient = Client();
-  final ethClient = Web3Client(rpcUrl, httpClient);
+  final client = Web3Client(rpcUrl, httpClient);
 
   try {
-    // Get categorized gas fee suggestions
-    final suggestedFees = await getSuggestedGasFees(
-      ethClient,
-      onError: (error) {
-        print('❌ Error for $networkName: ${error.error}');
-        return null;
-      },
-    );
+    print('📡 Analyzing $networkName (Expected: $expectedType)...');
 
-    print('✅ Successfully categorized and optimized:');
+    final suggestedFees = await getSuggestedGasFees(client);
 
-    // Display the categorized results
+    print('✅ Network successfully optimized:');
     print('   🏷️  Network: $networkName');
     print('   📊 Category: $expectedType');
+    print('   🌊 Congestion: ${((suggestedFees.networkCongestion ?? 0.5) * 100).toStringAsFixed(1)}%');
     print('   ⚡ Slow:    ${formatGwei(suggestedFees.slow.maxFeePerGas)} gwei');
     print('             Priority: ${formatGwei(suggestedFees.slow.maxPriorityFeePerGas)} gwei');
-
     print('   🚀 Average: ${formatGwei(suggestedFees.average.maxFeePerGas)} gwei');
     print('             Priority: ${formatGwei(suggestedFees.average.maxPriorityFeePerGas)} gwei');
-
     print('   💨 Fast:    ${formatGwei(suggestedFees.fast.maxFeePerGas)} gwei');
     print('             Priority: ${formatGwei(suggestedFees.fast.maxPriorityFeePerGas)} gwei');
-
     print('   ⛽ Base Fee: ${formatGwei(suggestedFees.baseFeePerGas)} gwei');
 
-    // Show category-specific optimizations applied
-    showCategoryOptimizations(expectedType);
-  } catch (e) {
-    print('❌ Error getting fee data from $networkName:');
-    if (e.toString().contains('SocketException')) {
-      print('   🌐 Network connectivity issue');
-    } else if (e.toString().contains('RPC')) {
-      print('   🔧 RPC error: ${e.toString()}');
-    } else {
-      print('   🐛 Unknown error: $e');
-    }
+    showAdaptiveOptimizations(expectedType, suggestedFees.networkCongestion ?? 0.5);
+  } catch (error) {
+    print('❌ Error testing $networkName: $error');
+    print('   💡 Using fallback values - network may be unavailable');
   } finally {
-    ethClient.dispose();
+    client.dispose();
   }
 }
 
-/// Shows the category-specific optimizations that were applied
-void showCategoryOptimizations(String categoryType) {
-  const categoryConfigs = {
+/// Shows the adaptive optimizations applied based on network type and congestion
+void showAdaptiveOptimizations(String categoryType, double congestion) {
+  const categoryOptimizations = {
     'Ethereum L1': {
-      'percentiles': '[1, 75, 90]',
-      'blocks': '40',
-      'reasoning': 'High congestion, active priority fee market',
-      'optimization': 'Aggressive percentiles to capture fee competition',
+      'basePercentiles': '[1, 75, 90]',
+      'baseBlocks': '25',
+      'adaptiveFeature': 'Congestion-aware percentiles: [1,85,95] when congested',
+      'blockOptimization': '20-35 blocks based on congestion level',
+      'congestionMultiplier': 'Up to 50% fee increase during high congestion',
     },
     'Layer 2': {
-      'percentiles': '[10, 50, 80]',
-      'blocks': '15',
-      'reasoning': 'Minimal priority fees, very fast finality',
-      'optimization': 'Conservative percentiles due to low fee variance',
+      'basePercentiles': '[20, 50, 70]',
+      'baseBlocks': '12',
+      'adaptiveFeature': 'Conservative approach due to minimal fee variance',
+      'blockOptimization': '8-15 blocks optimized for 2s block times',
+      'congestionMultiplier': 'Volatility dampening for stable low-congestion periods',
     },
     'Sidechain': {
-      'percentiles': '[5, 50, 85]',
-      'blocks': '20',
-      'reasoning': 'Fast blocks, moderate fees',
-      'optimization': 'Balanced percentiles for stable fee markets',
+      'basePercentiles': '[10, 50, 80]',
+      'baseBlocks': '18',
+      'adaptiveFeature': 'Congestion-adjusted: [5,60,90] when busy',
+      'blockOptimization': '12-25 blocks optimized for 3s block times',
+      'congestionMultiplier': 'Up to 20% fee increase during congestion',
     },
   };
 
-  final config = categoryConfigs[categoryType];
+  final config = categoryOptimizations[categoryType];
   if (config != null) {
-    print('   📊 Category Optimizations:');
-    print('      Percentiles: ${config['percentiles']}');
-    print('      Historical Blocks: ${config['blocks']}');
-    print('      💡 ${config['reasoning']}');
-    print('      🎯 ${config['optimization']}');
+    print('   🎯 Adaptive Optimizations Applied:');
+    print('      Base Configuration: ${config['basePercentiles']} percentiles, ${config['baseBlocks']} blocks');
+    print('      ⚡ Real-time Adaptation: ${config['adaptiveFeature']}');
+    print('      📊 Block Count Optimization: ${config['blockOptimization']}');
+    print('      🌊 Congestion Response: ${config['congestionMultiplier']}');
+    print('      📈 Current Congestion Level: ${(congestion * 100).toStringAsFixed(1)}%');
   }
 }
 
-/// Demonstrates category-based optimization impact
-Future<void> demonstrateCategoryOptimization() async {
+/// Demonstrates congestion-aware adaptation
+Future<void> demonstrateCongestionAdaptation() async {
   final httpClient = Client();
-  final ethClient = Web3Client('https://1rpc.io/matic', httpClient);
+  final ethClient = Web3Client('https://eth.llamarpc.com', httpClient);
 
   try {
-    // Get Polygon with correct Sidechain categorization
-    print('Testing Polygon with smart categorization...');
-    final polygonOptimized = await getSuggestedGasFees(ethClient);
+    print('Testing Ethereum mainnet with congestion-aware adaptation...');
+    final ethFees = await getSuggestedGasFees(ethClient);
+    final congestion = ethFees.networkCongestion ?? 0.5;
 
-    // Force Ethereum L1 configuration for comparison
-    final polygonForced = await getSuggestedGasFees(
-      ethClient,
-      forceChainId: 1, // Force Ethereum L1 category
-      onError: (error) {
-        print('Error with forced config: ${error.error}');
-        return null;
-      },
-    );
+    print('📊 Ethereum Mainnet Analysis:');
+    print('   🌊 Current Congestion: ${(congestion * 100).toStringAsFixed(1)}%');
 
-    print('✅ Polygon with Smart Categorization (Sidechain):');
-    print('   🚀 Average: ${formatGwei(polygonOptimized.average.maxFeePerGas)} gwei');
-    print('             Priority: ${formatGwei(polygonOptimized.average.maxPriorityFeePerGas)} gwei');
+    if (congestion > 0.8) {
+      print('   🚨 High Congestion Detected!');
+      print('      ⚡ Adaptive Response: Using aggressive [1, 85, 95] percentiles');
+      print('      📊 Block Count: Increased for stability (${(25 * 1.2).round()} blocks)');
+      print('      💰 Fee Adjustment: Up to 50% congestion multiplier applied');
+    } else if (congestion > 0.5) {
+      print('   🟡 Moderate Congestion');
+      print('      ⚡ Adaptive Response: Standard [1, 75, 90] percentiles');
+      print('      📊 Block Count: Normal range (25 blocks)');
+      print('      💰 Fee Adjustment: Proportional congestion multiplier');
+    } else {
+      print('   🟢 Low Congestion Period');
+      print('      ⚡ Adaptive Response: Conservative [5, 60, 85] percentiles');
+      print('      📊 Block Count: Reduced for efficiency (${(25 * 0.8).round()} blocks)');
+      print('      💰 Fee Adjustment: Minimal congestion impact');
+    }
 
-    print('❌ Polygon with Forced Ethereum L1 Category:');
-    print('   🚀 Average: ${formatGwei(polygonForced.average.maxFeePerGas)} gwei');
-    print('             Priority: ${formatGwei(polygonForced.average.maxPriorityFeePerGas)} gwei');
-
-    final improvement =
-        ((polygonForced.average.maxFeePerGas - polygonOptimized.average.maxFeePerGas).toDouble() / polygonForced.average.maxFeePerGas.toDouble() * 100);
-
-    print('');
-    print('📈 Smart Categorization Impact:');
-    print('   Forced Ethereum L1: ${formatGwei(polygonForced.average.maxFeePerGas)} gwei');
-    print('   Smart Sidechain:    ${formatGwei(polygonOptimized.average.maxFeePerGas)} gwei');
-    print('   💰 Improvement: ${improvement.toStringAsFixed(1)}% ${improvement > 0 ? 'savings' : 'increase'}');
-    print('   💡 Smart categorization eliminates redundant network configs!');
-
-    print('');
-    print('🌟 Benefits of Smart Categorization:');
-    print('   ✨ No individual network configurations needed');
-    print('   ⚡ Automatic optimization for 40+ networks');
-    print('   🔧 Maintainable with just 4 categories');
-    print('   🎯 Accurate results across all network types');
-  } catch (e) {
-    print('❌ Error in category optimization demonstration: $e');
+    print('   🎯 Result: Optimized for current network conditions');
+  } catch (error) {
+    print('❌ Error in congestion analysis: $error');
   } finally {
     ethClient.dispose();
   }
 }
 
-/// Formats wei to gwei with 3 decimal places
+/// Demonstrates adaptive vs static configuration comparison
+Future<void> demonstrateAdaptiveVsStatic() async {
+  final httpClient = Client();
+  final polygonClient = Web3Client('https://1rpc.io/matic', httpClient);
+
+  try {
+    // Get adaptive optimization
+    print('Testing Polygon with adaptive optimization...');
+    final adaptiveFees = await getSuggestedGasFees(polygonClient);
+
+    // Simulate static configuration (old approach)
+    final staticFees = await getSuggestedGasFees(
+      polygonClient,
+      historicalBlocks: 20, // Fixed value
+      percentiles: [1, 75, 90], // Fixed Ethereum-like percentiles
+      onError: (error) {
+        print('Static configuration error: ${error.error}');
+        return null;
+      },
+    );
+
+    final congestion = adaptiveFees.networkCongestion ?? 0.5;
+
+    print('📈 Adaptive vs Static Configuration Results:');
+    print('');
+    print('✅ Adaptive System (Smart Sidechain Optimization):');
+    print('   🌊 Congestion: ${(congestion * 100).toStringAsFixed(1)}%');
+    print('   📊 Parameters: Adaptive percentiles based on congestion');
+    print('   ⚡ Average Fee: ${formatGwei(adaptiveFees.average.maxFeePerGas)} gwei');
+    print('   🎯 Optimized for: Fast 3s blocks, moderate fees, congestion-aware');
+    print('');
+    print('❌ Static System (Fixed Ethereum Configuration):');
+    print('   📊 Parameters: Fixed [1, 75, 90] percentiles, 20 blocks');
+    print('   ⚡ Average Fee: ${formatGwei(staticFees.average.maxFeePerGas)} gwei');
+    print('   🎯 Optimized for: Ethereum 12s blocks (wrong for Polygon!)');
+
+    final improvement = ((staticFees.average.maxFeePerGas - adaptiveFees.average.maxFeePerGas).toDouble() / staticFees.average.maxFeePerGas.toDouble() * 100);
+
+    print('');
+    print('💡 Adaptive System Benefits:');
+    print('   💰 Cost Optimization: ${improvement.toStringAsFixed(1)}% ${improvement > 0 ? 'savings' : 'premium'}');
+    print('   ⚡ Real-time Adaptation: Parameters adjust to current conditions');
+    print('   🎯 Network-Specific: Optimized for Polygon\'s 3s blocks vs Ethereum\'s 12s');
+    print('   📊 Congestion-Aware: Percentiles adapt to network traffic');
+    print('   🔄 Weighted Recent Blocks: Newer data gets higher priority');
+
+    print('');
+    print('🌟 Next-Generation Features:');
+    print('   ✨ Zero redundant configurations (4 categories vs 40+ individual)');
+    print('   ⚡ Real-time parameter optimization based on live network data');
+    print('   🧠 Intelligent congestion detection and response');
+    print('   🎯 Network speed awareness (2s L2s vs 12s Ethereum)');
+    print('   📊 Advanced weighted averaging with recent block preference');
+    print('   🔄 Volatility dampening for stable L2 environments');
+  } catch (error) {
+    print('❌ Error in comparison analysis: $error');
+  } finally {
+    polygonClient.dispose();
+  }
+}
+
+/// Helper function to format wei to gwei with proper precision
 String formatGwei(BigInt wei) {
   final gwei = wei.toDouble() / 1e9;
-  return gwei.toStringAsFixed(3);
+  if (gwei < 0.001) {
+    return gwei.toStringAsExponential(2);
+  } else if (gwei < 1) {
+    return gwei.toStringAsFixed(3);
+  } else if (gwei < 10) {
+    return gwei.toStringAsFixed(2);
+  } else {
+    return gwei.toStringAsFixed(1);
+  }
 }
