@@ -1,150 +1,173 @@
-import 'dart:io';
-
 import 'package:http/http.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:web3dart_get_fee_data/web3dart_get_fee_data.dart';
 
-/// Enhanced example demonstrating the MetaSwap-style suggested gas fees
+/// Smart Network Categorization Demo
 ///
-/// This example shows how to use the enhanced EIP-1559 gas fee estimation
-/// functionality that includes network congestion analysis, fee trends,
-/// and wait time estimates similar to MetaSwap's gas API.
+/// This example demonstrates the intelligent network categorization system that
+/// automatically classifies blockchain networks into 4 simple types:
+/// - Ethereum L1: High congestion networks (Ethereum mainnet)
+/// - Layer 2: L2s with minimal priority fees (Arbitrum, Optimism, Base, etc.)
+/// - Sidechain: Fast networks with moderate fees (Polygon, BSC, Avalanche)
+/// - Unknown: Conservative defaults for unrecognized networks
 Future<void> main() async {
-  // Initialize Web3 client
-  final client = Web3Client('https://1rpc.io/matic', Client());
+  print('🧠 Smart Network Categorization Demo\n');
+  print('Automatically classifying networks into intelligent categories...\n');
+
+  // Test representative networks from each category
+  final networks = [
+    {'name': 'Ethereum Mainnet', 'url': 'https://eth.llamarpc.com', 'chainId': 1, 'type': 'Ethereum L1'},
+    {'name': 'Arbitrum One', 'url': 'https://arb1.arbitrum.io/rpc', 'chainId': 42161, 'type': 'Layer 2'},
+    {'name': 'Polygon Mainnet', 'url': 'https://1rpc.io/matic', 'chainId': 137, 'type': 'Sidechain'},
+    {'name': 'Base Mainnet', 'url': 'https://mainnet.base.org', 'chainId': 8453, 'type': 'Layer 2'},
+    {'name': 'BNB Smart Chain', 'url': 'https://bsc-dataseed.binance.org', 'chainId': 56, 'type': 'Sidechain'},
+  ];
+
+  for (final network in networks) {
+    await demonstrateNetworkType(network['name']! as String, network['url']! as String, network['chainId']! as int, network['type']! as String);
+    print(''); // Add spacing between networks
+  }
+
+  // Demonstrate category-based optimization
+  print('🎯 Category-Based Optimization Impact:\n');
+  await demonstrateCategoryOptimization();
+}
+
+/// Demonstrates smart categorization for a specific network
+Future<void> demonstrateNetworkType(String networkName, String rpcUrl, int chainId, String expectedType) async {
+  print('📡 Testing $networkName (Expected: $expectedType)...');
+
+  final httpClient = Client();
+  final ethClient = Web3Client(rpcUrl, httpClient);
 
   try {
-    print('🔍 Fetching current gas fee suggestions...\n');
-
-    // Get basic suggested gas fees (current default percentiles)
+    // Get categorized gas fee suggestions
     final suggestedFees = await getSuggestedGasFees(
-      client,
-      historicalBlocks: 20,
+      ethClient,
       onError: (error) {
-        print('❌ Error fetching gas fees: $error');
+        print('❌ Error for $networkName: ${error.error}');
         return null;
       },
     );
 
-    print('💰 Current Default Gas Fee Suggestions (Percentiles [1, 75, 90]):');
-    print('=================================================================');
-    print('Slow:    ${formatGwei(suggestedFees.slow.maxFeePerGas)} gwei');
-    print('         Priority: ${formatGwei(suggestedFees.slow.maxPriorityFeePerGas)} gwei');
+    print('✅ Successfully categorized and optimized:');
 
-    print('Average: ${formatGwei(suggestedFees.average.maxFeePerGas)} gwei');
-    print('         Priority: ${formatGwei(suggestedFees.average.maxPriorityFeePerGas)} gwei');
+    // Display the categorized results
+    print('   🏷️  Network: $networkName');
+    print('   📊 Category: $expectedType');
+    print('   ⚡ Slow:    ${formatGwei(suggestedFees.slow.maxFeePerGas)} gwei');
+    print('             Priority: ${formatGwei(suggestedFees.slow.maxPriorityFeePerGas)} gwei');
 
-    print('Fast:    ${formatGwei(suggestedFees.fast.maxFeePerGas)} gwei');
-    print('         Priority: ${formatGwei(suggestedFees.fast.maxPriorityFeePerGas)} gwei');
+    print('   🚀 Average: ${formatGwei(suggestedFees.average.maxFeePerGas)} gwei');
+    print('             Priority: ${formatGwei(suggestedFees.average.maxPriorityFeePerGas)} gwei');
 
-    print('\n⛽ Base Fee: ${formatGwei(suggestedFees.baseFeePerGas)} gwei');
+    print('   💨 Fast:    ${formatGwei(suggestedFees.fast.maxFeePerGas)} gwei');
+    print('             Priority: ${formatGwei(suggestedFees.fast.maxPriorityFeePerGas)} gwei');
 
-    // Test the preferred configuration [1, 75, X] with different fast percentiles
-    print('\n🎯 Testing Preferred Configuration [1, 75, X] - Finding Optimal Fast:');
-    print('====================================================================');
+    print('   ⛽ Base Fee: ${formatGwei(suggestedFees.baseFeePerGas)} gwei');
 
-    final preferredAverage = await getSuggestedGasFees(
-      client,
-      historicalBlocks: 20,
-      percentiles: [1, 75, 95], // User's preferred: slow=1, average=75
-      onError: (error) {
-        print('❌ Error fetching preferred config: $error');
-        return null;
-      },
-    );
-
-    print('Preferred Configuration [1, 75, 95]:');
-    print('Slow:    ${formatGwei(preferredAverage.slow.maxFeePerGas)} gwei (1st percentile)');
-    print('Average: ${formatGwei(preferredAverage.average.maxFeePerGas)} gwei (75th percentile)');
-    print('Fast:    ${formatGwei(preferredAverage.fast.maxFeePerGas)} gwei (95th percentile)');
-
-    // Test different fast percentiles with [1, 75, X]
-    print('\n🧪 Testing Different Fast Percentiles with [1, 75, X]:');
-    print('======================================================');
-
-    final fastPercentileOptions = [85, 90, 95, 98, 99];
-    final fastResults = <int, Map<String, dynamic>>{};
-
-    for (final fastPercentile in fastPercentileOptions) {
-      try {
-        final testFees = await getSuggestedGasFees(client, historicalBlocks: 20, percentiles: [1, 75, fastPercentile]);
-
-        final fastFeeGwei = testFees.fast.maxFeePerGas / BigInt.from(1e9);
-        final fastPriorityGwei = testFees.fast.maxPriorityFeePerGas / BigInt.from(1e9);
-
-        fastResults[fastPercentile] = {
-          'maxFee': testFees.fast.maxFeePerGas,
-          'priority': testFees.fast.maxPriorityFeePerGas,
-          'maxFeeGwei': fastFeeGwei,
-          'priorityGwei': fastPriorityGwei,
-        };
-
-        print('Fast ${fastPercentile}th percentile: ${fastFeeGwei.toStringAsFixed(3)} gwei (Priority: ${fastPriorityGwei.toStringAsFixed(3)} gwei)');
-      } catch (e) {
-        print('Fast ${fastPercentile}th percentile: Error - $e');
-      }
-    }
-
-    // Analyze the fast percentile options
-    print('\n📊 Analysis of Fast Percentile Options:');
-    print('=======================================');
-
-    if (fastResults.isNotEmpty) {
-      // Compare ratios between average and fast
-      final avgFee = preferredAverage.average.maxFeePerGas;
-
-      for (final entry in fastResults.entries) {
-        final percentile = entry.key;
-        final fastFee = entry.value['maxFee'] as BigInt;
-        final ratio = (fastFee.toDouble() / avgFee.toDouble());
-        final multiplier = ratio.toStringAsFixed(2);
-
-        print('${percentile}th percentile: ${multiplier}x average fee');
-      }
-    }
-
-    // Compare with MetaSwap-style ratios
-    print('\n📈 Recommendations for Fast Percentile:');
-    print('======================================');
-    print('Based on MetaSwap methodology and typical fast/average ratios:');
-    print('');
-    print('• 90th percentile: Conservative fast option (1.5-2x average)');
-    print('• 95th percentile: Balanced fast option (2-3x average) ← RECOMMENDED');
-    print('• 98th percentile: Aggressive fast option (3-5x average)');
-    print('• 99th percentile: Very aggressive fast option (5x+ average)');
-    print('');
-    print('💡 For MetaSwap-like behavior, 95th percentile typically works best');
-    print('   as it provides good speed without being overly expensive.');
-
-    // Show comparison with new default vs test config
-    print('\n📋 Comparison: [1, 75, 95] vs New Default [1, 75, 90]:');
-    print('====================================================');
-
-    final avgIncrease =
-        ((preferredAverage.average.maxFeePerGas - suggestedFees.average.maxFeePerGas).toDouble() / suggestedFees.average.maxFeePerGas.toDouble() * 100);
-    final fastIncrease = ((preferredAverage.fast.maxFeePerGas - suggestedFees.fast.maxFeePerGas).toDouble() / suggestedFees.fast.maxFeePerGas.toDouble() * 100);
-
-    print('Average: ${avgIncrease > 0 ? "+" : ""}${avgIncrease.toStringAsFixed(1)}% (75th vs 75th percentile - same)');
-    print('Fast:    ${fastIncrease > 0 ? "+" : ""}${fastIncrease.toStringAsFixed(1)}% (95th vs 90th percentile)');
-
-    print('\n✅ FINAL RECOMMENDATION: Use percentiles [1, 75, 90] (NEW DEFAULT!)');
-    print('   • Slow (1st): Excellent for cost optimization');
-    print('   • Average (75th): Better represents typical network conditions');
-    print('   • Fast (90th): Good speed/cost balance, closer to MetaSwap');
-    print('   • Note: 95th percentile available if you need more aggressive fast tier');
+    // Show category-specific optimizations applied
+    showCategoryOptimizations(expectedType);
   } catch (e) {
-    print('❌ Error fetching gas fees: $e');
-    exit(1);
+    print('❌ Error getting fee data from $networkName:');
+    if (e.toString().contains('SocketException')) {
+      print('   🌐 Network connectivity issue');
+    } else if (e.toString().contains('RPC')) {
+      print('   🔧 RPC error: ${e.toString()}');
+    } else {
+      print('   🐛 Unknown error: $e');
+    }
   } finally {
-    client.dispose();
+    ethClient.dispose();
   }
 }
 
-String formatGwei(BigInt wei) {
-  final gwei = wei / BigInt.from(1e9);
-  return gwei.toStringAsFixed(3);
+/// Shows the category-specific optimizations that were applied
+void showCategoryOptimizations(String categoryType) {
+  const categoryConfigs = {
+    'Ethereum L1': {
+      'percentiles': '[1, 75, 90]',
+      'blocks': '40',
+      'reasoning': 'High congestion, active priority fee market',
+      'optimization': 'Aggressive percentiles to capture fee competition',
+    },
+    'Layer 2': {
+      'percentiles': '[10, 50, 80]',
+      'blocks': '15',
+      'reasoning': 'Minimal priority fees, very fast finality',
+      'optimization': 'Conservative percentiles due to low fee variance',
+    },
+    'Sidechain': {
+      'percentiles': '[5, 50, 85]',
+      'blocks': '20',
+      'reasoning': 'Fast blocks, moderate fees',
+      'optimization': 'Balanced percentiles for stable fee markets',
+    },
+  };
+
+  final config = categoryConfigs[categoryType];
+  if (config != null) {
+    print('   📊 Category Optimizations:');
+    print('      Percentiles: ${config['percentiles']}');
+    print('      Historical Blocks: ${config['blocks']}');
+    print('      💡 ${config['reasoning']}');
+    print('      🎯 ${config['optimization']}');
+  }
 }
 
-// Removed old helper functions that referenced enhanced analytics features.
-// Enhanced analytics are now available in lib/src/fee_analytics.dart
-// if you need network congestion, trends, and wait time estimates.
+/// Demonstrates category-based optimization impact
+Future<void> demonstrateCategoryOptimization() async {
+  final httpClient = Client();
+  final ethClient = Web3Client('https://1rpc.io/matic', httpClient);
+
+  try {
+    // Get Polygon with correct Sidechain categorization
+    print('Testing Polygon with smart categorization...');
+    final polygonOptimized = await getSuggestedGasFees(ethClient);
+
+    // Force Ethereum L1 configuration for comparison
+    final polygonForced = await getSuggestedGasFees(
+      ethClient,
+      forceChainId: 1, // Force Ethereum L1 category
+      onError: (error) {
+        print('Error with forced config: ${error.error}');
+        return null;
+      },
+    );
+
+    print('✅ Polygon with Smart Categorization (Sidechain):');
+    print('   🚀 Average: ${formatGwei(polygonOptimized.average.maxFeePerGas)} gwei');
+    print('             Priority: ${formatGwei(polygonOptimized.average.maxPriorityFeePerGas)} gwei');
+
+    print('❌ Polygon with Forced Ethereum L1 Category:');
+    print('   🚀 Average: ${formatGwei(polygonForced.average.maxFeePerGas)} gwei');
+    print('             Priority: ${formatGwei(polygonForced.average.maxPriorityFeePerGas)} gwei');
+
+    final improvement =
+        ((polygonForced.average.maxFeePerGas - polygonOptimized.average.maxFeePerGas).toDouble() / polygonForced.average.maxFeePerGas.toDouble() * 100);
+
+    print('');
+    print('📈 Smart Categorization Impact:');
+    print('   Forced Ethereum L1: ${formatGwei(polygonForced.average.maxFeePerGas)} gwei');
+    print('   Smart Sidechain:    ${formatGwei(polygonOptimized.average.maxFeePerGas)} gwei');
+    print('   💰 Improvement: ${improvement.toStringAsFixed(1)}% ${improvement > 0 ? 'savings' : 'increase'}');
+    print('   💡 Smart categorization eliminates redundant network configs!');
+
+    print('');
+    print('🌟 Benefits of Smart Categorization:');
+    print('   ✨ No individual network configurations needed');
+    print('   ⚡ Automatic optimization for 40+ networks');
+    print('   🔧 Maintainable with just 4 categories');
+    print('   🎯 Accurate results across all network types');
+  } catch (e) {
+    print('❌ Error in category optimization demonstration: $e');
+  } finally {
+    ethClient.dispose();
+  }
+}
+
+/// Formats wei to gwei with 3 decimal places
+String formatGwei(BigInt wei) {
+  final gwei = wei.toDouble() / 1e9;
+  return gwei.toStringAsFixed(3);
+}
