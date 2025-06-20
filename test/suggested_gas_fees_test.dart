@@ -56,12 +56,12 @@ void main() {
       try {
         final suggestedFees = await getSuggestedGasFees(invalidClient);
 
-        // Should return fallback values
+        // Should return fallback values from the default network config
         expect(suggestedFees, isNotNull);
-        expect(suggestedFees.baseFeePerGas, equals(BigInt.from(20e9))); // 20 gwei default
-        expect(suggestedFees.slow.maxPriorityFeePerGas, equals(BigInt.from(1e9))); // 1 gwei
-        expect(suggestedFees.average.maxPriorityFeePerGas, equals(BigInt.from(15e8))); // 1.5 gwei
-        expect(suggestedFees.fast.maxPriorityFeePerGas, equals(BigInt.from(2e9))); // 2 gwei
+        expect(suggestedFees.baseFeePerGas, equals(BigInt.from(10e9))); // 10 gwei default (NetworkConfigs.defaultConfig)
+        expect(suggestedFees.slow.maxPriorityFeePerGas, equals(BigInt.from(2e9))); // 2 gwei
+        expect(suggestedFees.average.maxPriorityFeePerGas, equals(BigInt.from(4e9))); // 4 gwei
+        expect(suggestedFees.fast.maxPriorityFeePerGas, equals(BigInt.from(8e9))); // 8 gwei
       } finally {
         invalidClient.dispose();
       }

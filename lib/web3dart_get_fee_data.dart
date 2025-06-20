@@ -60,11 +60,11 @@
 /// methodology described in [Alchemy's documentation](https://www.alchemy.com/docs/how-to-build-a-gas-fee-estimator-using-eip-1559):
 ///
 /// 1. **Historical Analysis**: Analyzes recent blocks using `eth_feeHistory`
-/// 2. **Percentile Calculation**: Uses 1st, 50th, and 99th percentiles of priority fees
+/// 2. **Percentile Calculation**: Uses 1st, 75th, and 90th percentiles of priority fees
 /// 3. **Speed Tiers**: Provides three options:
 ///    - `slow`: Conservative (1st percentile) - cheaper but slower
-///    - `average`: Standard (50th percentile) - balanced cost and speed
-///    - `fast`: Aggressive (99th percentile) - more expensive but faster
+///    - `average`: Standard (75th percentile) - balanced cost and speed
+///    - `fast`: Aggressive (90th percentile) - more expensive but faster
 /// 4. **Base Fee Addition**: Combines priority fees with current base fee
 ///
 /// ### Custom Parameters
@@ -81,6 +81,16 @@
 library;
 
 export 'src/fee_data_model.dart';
+// Export constants for easy access
+export 'src/suggested_gas_fees.dart'
+    show
+        kDefaultPercentiles,
+        kDefaultHistoricalBlocks,
+        kMinimumPriorityFeeWei,
+        kDefaultSlowPriorityFeeWei,
+        kDefaultAveragePriorityFeeWei,
+        kDefaultFastPriorityFeeWei,
+        kDefaultBaseFeeWei;
 export 'src/suggested_gas_fees.dart';
 export 'src/web3dart_get_fee_data_base.dart';
 

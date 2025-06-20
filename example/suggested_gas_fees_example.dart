@@ -22,7 +22,7 @@ void main() async {
 
     // Convert wei to gwei for readability
     final baseFeeGwei = _weiToGwei(suggestedFees.baseFeePerGas);
-    print('⚡ Base Fee: ${baseFeeGwei.toStringAsFixed(3)} gwei');
+    print('⚡ Base Fee: ${baseFeeGwei.toStringAsFixed(5)} gwei');
     print('');
 
     // Display fee tiers
@@ -49,8 +49,15 @@ void main() async {
       },
     );
 
-    print('Using 10 historical blocks instead of 20:');
+    print('Using 10 historical blocks instead of $kDefaultHistoricalBlocks:');
     _printFeeTier('🚶 AVERAGE', customFees.average, 'Custom analysis');
+
+    // Example with constants
+    print('\n🎛️ Using Available Constants:');
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    print('Default percentiles: $kDefaultPercentiles');
+    print('Default historical blocks: $kDefaultHistoricalBlocks');
+    print('Minimum priority fee: $kMinimumPriorityFeeWei wei (${_weiToGwei(BigInt.from(kMinimumPriorityFeeWei)).toStringAsFixed(6)} gwei)');
 
     // Example: Setting transaction parameters
     print('\n📝 Transaction Example:');
@@ -93,8 +100,8 @@ void _printFeeTier(String name, GasFeeEstimate estimate, String description) {
   final maxFeeGwei = _weiToGwei(estimate.maxFeePerGas);
 
   print('$name ($description)');
-  print('  Priority Fee: ${priorityFeeGwei.toStringAsFixed(3)} gwei');
-  print('  Max Fee:      ${maxFeeGwei.toStringAsFixed(3)} gwei');
+  print('  Priority Fee: ${priorityFeeGwei.toStringAsFixed(5)} gwei');
+  print('  Max Fee:      ${maxFeeGwei.toStringAsFixed(5)} gwei');
   print('');
 }
 

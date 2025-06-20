@@ -102,11 +102,11 @@ The `getSuggestedGasFees` function implements the EIP-1559 fee estimation method
 ### How It Works
 
 1. **Historical Analysis**: Analyzes recent blocks using `eth_feeHistory` RPC call
-2. **Percentile Calculation**: Uses 1st, 50th, and 99th percentiles of priority fees
+2. **Percentile Calculation**: Uses 1st, 75th, and 90th percentiles of priority fees
 3. **Speed Tiers**: Provides three options:
    - `slow`: Conservative (1st percentile) - cheaper but slower
-   - `average`: Standard (50th percentile) - balanced cost and speed
-   - `fast`: Aggressive (99th percentile) - more expensive but faster
+   - `average`: Standard (75th percentile) - balanced cost and speed
+   - `fast`: Aggressive (90th percentile) - more expensive but faster
 4. **Base Fee Addition**: Combines priority fees with current base fee
 
 ### When to Use Each Tier
